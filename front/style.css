@@ -1,0 +1,554 @@
+:root {
+  --ink: #17343a;
+  --muted: #64777a;
+  --line: #dce8e7;
+  --sea: #0c8fa4;
+  --leaf: #3a9b77;
+  --sun: #f2b84b;
+  --mist: #f4faf9;
+  --white: #ffffff;
+  --shadow: 0 24px 70px rgba(23, 52, 58, 0.14);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+      overflow-x: hidden;
+  margin: 0;
+  color: var(--ink);
+  background: var(--mist);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body::selection {
+  color: var(--white);
+  background: var(--sea);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+.capa {
+  min-height: 88vh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  color: var(--white);
+  background:
+    linear-gradient(90deg, rgba(8, 36, 43, 0.72), rgba(8, 36, 43, 0.18)),
+    url("https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=1800&q=85")
+      center/cover;
+}
+
+.navegacao {
+  width: min(1160px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 24px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.marca,
+.links-navegacao {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.marca {
+  font-weight: 800;
+}
+
+.simbolo-marca {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  background: var(--white);
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16);
+}
+
+.simbolo-marca img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+}
+
+.links-navegacao a {
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 999px;
+  transition: transform 180ms ease, background 180ms ease;
+}
+
+.links-navegacao a:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.conteudo-capa {
+  width: min(1160px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 12vh 0 18vh;
+  align-self: center;
+}
+
+.rotulo-destaque {
+  margin: 0 0 12px;
+  color: var(--sun);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.capa h1,
+.secao h2,
+.texto-avaliacao h2,
+.painel-comentarios h2 {
+  margin: 0;
+  line-height: 1;
+}
+
+.capa h1 {
+  max-width: 780px;
+  font-size: clamp(4rem, 13vw, 8.5rem);
+}
+
+.conteudo-capa p:not(.rotulo-destaque) {
+  max-width: 560px;
+  margin: 24px 0;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: clamp(1rem, 2vw, 1.25rem);
+}
+
+.botao-principal,
+.botao-enviar {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50px;
+  padding: 0 22px;
+  color: var(--white);
+  background: var(--sea);
+  border: 0;
+  border-radius: 999px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 16px 32px rgba(12, 143, 164, 0.28);
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.botao-principal:hover,
+.botao-enviar:hover {
+  transform: translateY(-2px);
+  background: #087f91;
+  box-shadow: 0 20px 40px rgba(12, 143, 164, 0.34);
+}
+
+main {
+  width: min(1160px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 64px 0;
+}
+
+.secao,
+.filtros-praias,
+.avaliacao-praias,
+.painel-comentarios {
+  margin-bottom: 36px;
+}
+
+.secao,
+.filtros-praias,
+.avaliacao-praias,
+.painel-comentarios {
+  display: grid;
+  gap: 24px;
+}
+
+.introducao,
+.avaliacao-praias {
+  grid-template-columns: minmax(0, 0.8fr) minmax(280px, 1.2fr);
+  align-items: start;
+}
+
+.secao h2,
+.texto-avaliacao h2,
+.painel-comentarios h2 {
+  font-size: clamp(2rem, 4vw, 3.6rem);
+}
+
+.secao > p,
+.texto-avaliacao p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.filtros-praias {
+  grid-template-columns: 1fr 260px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 16px 40px rgba(23, 52, 58, 0.08);
+  backdrop-filter: blur(16px);
+}
+
+.campo-busca,
+.formulario-avaliacao label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  color: var(--ink);
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  outline: 0;
+  transition: border 160ms ease, box-shadow 160ms ease;
+}
+
+input,
+select {
+  height: 48px;
+  padding: 0 14px;
+}
+
+textarea {
+  min-height: 116px;
+  padding: 14px;
+  resize: vertical;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--sea);
+  box-shadow: 0 0 0 4px rgba(12, 143, 164, 0.14);
+}
+
+.grade-praias {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 72px;
+}
+
+.titulo-avaliacao{
+  font-family: "Sora", sans-serif;
+}
+
+.paragrafo-avaliacao{
+  font-size: 15px;
+  gap: 30px;
+  padding: 10px;
+}
+
+.cartao-praia {
+  overflow: hidden;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 18px 50px rgba(23, 52, 58, 0.1);
+  animation: rise 500ms ease both;
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+
+.cartao-praia:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow);
+}
+
+.cartao-praia img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  display: block;
+}
+
+.conteudo-praia {
+  padding: 18px;
+  display: grid;
+  gap: 14px;
+}
+
+.cabecalho-praia {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cabecalho-praia h3 {
+  margin: 0;
+  font-size: 1.12rem;
+}
+
+.cabecalho-praia p,
+.conteudo-praia > p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.cabecalho-praia strong {
+  min-width: 48px;
+  min-height: 48px;
+  display: grid;
+  place-items: center;
+  color: var(--white);
+  background: var(--leaf);
+  border-radius: 50%;
+}
+
+.condicoes,
+.lista-condicoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.condicoes span,
+.opcao-condicao span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 10px;
+  color: #22595f;
+  background: #e7f5f3;
+  border: 1px solid #c9e8e3;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.conteudo-praia footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--sun);
+  font-weight: 900;
+}
+
+.conteudo-praia footer small {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.avaliacao-praias {
+  padding: 34px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.formulario-avaliacao {
+  display: grid;
+  gap: 18px;
+}
+
+.linha-formulario {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+legend {
+  margin-bottom: 10px;
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.opcao-condicao {
+  cursor: pointer;
+}
+
+.opcao-condicao input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.opcao-condicao input:checked + span {
+  color: var(--white);
+  background: var(--sea);
+  border-color: var(--sea);
+}
+
+.previa-nota {
+  color: var(--sea);
+  font-weight: 900;
+}
+
+.mensagem-formulario {
+  min-height: 22px;
+  margin: 0;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.mensagem-formulario[data-type="success"] {
+  color: var(--leaf);
+}
+
+.mensagem-formulario[data-type="error"] {
+  color: #c54c42;
+}
+
+.painel-comentarios {
+  padding-top: 24px;
+}
+
+.lista-comentarios {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.comentario {
+  min-height: 190px;
+  padding: 20px;
+  display: grid;
+  align-content: space-between;
+  gap: 16px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 14px 40px rgba(23, 52, 58, 0.08);
+}
+
+.comentario div {
+  display: grid;
+  gap: 4px;
+}
+
+.comentario span,
+.comentario small,
+.comentario p {
+  color: var(--muted);
+}
+
+.comentario p {
+  margin: 0;
+  line-height: 1.65;
+}
+
+.comentario small {
+  font-weight: 800;
+}
+
+.vazio {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 28px;
+  color: var(--muted);
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 980px) {
+  .grade-praias,
+  .lista-comentarios {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .introducao,
+  .avaliacao-praias {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .navegacao,
+  .links-navegacao,
+  .filtros-praias,
+  .linha-formulario {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
+  .navegacao {
+    gap: 16px;
+    flex-direction: column;
+  }
+
+  .links-navegacao {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .links-navegacao a {
+    text-align: center;
+  }
+
+  .capa {
+    min-height: 760px;
+  }
+
+  .conteudo-capa {
+    padding: 8vh 0 12vh;
+  }
+
+  main {
+    padding: 46px 0;
+  }
+
+  .grade-praias,
+  .lista-comentarios {
+    grid-template-columns: 1fr;
+  }
+
+  .avaliacao-praias {
+    padding: 22px;
+  }
+}

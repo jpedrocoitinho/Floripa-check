@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Floripa Check</title>
+    <link rel="preconnect" href="https://images.unsplash.com" />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <!-- link das fontes -->
+ <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cossette+Texte:wght@400;700&family=Sora:wght@100..800&display=swap" rel="stylesheet">
+<link rel="icon" href="img/logo-floripa-check.svg" type="image/svg+xml">
+  </head>
+  <body>
+    <header class="capa">
+      <nav class="navegacao">
+        <a class="marca" href="#topo" aria-label="Floripa Check">
+          <span class="simbolo-marca"><img src="img/logo-floripa-check.svg" alt=""></span>
+          <span>Floripa Check</span>
+        </a>
+        <div class="links-navegacao">
+          <a href="#praias">Praias</a>
+          <a href="#avaliar">Avaliar</a>
+          <a href="auth.html">Entrar</a>
+        </div>
+      </nav>
+
+      <section class="conteudo-capa" id="topo">
+        <p class="rotulo-destaque">Guia colaborativo de praias</p>
+        <h1>Floripa Check</h1>
+        <p>
+          Veja avaliações, comentários e condições reais das praias antes de sair de casa.
+        </p>
+        <a class="botao-principal" href="#avaliar">Avaliar uma praia</a>
+      </section>
+    </header>
+
+    <main>
+      <section class="secao introducao">
+        <div>
+          <p class="rotulo-destaque">Ao vivo pela comunidade</p>
+          <h2>Escolha a praia pelo clima do dia</h2>
+        </div>
+        <p>
+          As notas e condições abaixo vêm dos usuários: praia limpa, cheia, mar agitado,
+          agua calma e outros sinais úteis para planejar o rolê.
+        </p>
+      </section>
+
+      <section class="filtros-praias" aria-label="Filtros">
+        <label class="campo-busca">
+          <span>Buscar praia</span>
+          <input id="campoBuscaInput" type="search" placeholder="Ex: Campeche" />
+        </label>
+        <label class="campo-busca">
+          <span>Condição</span>
+          <select id="conditionFilter">
+            <option value="">Todas</option>
+            <option value="Limpa">Limpa</option>
+            <option value="Cheia">Cheia</option>
+            <option value="Tranquila">Tranquila</option>
+            <option value="Mar agitado">Mar agitado</option>
+            <option value="Agua calma">Agua calma</option>
+            <option value="Boa para surf">Boa para surf</option>
+          </select>
+        </label>
+      </section>
+
+      <section class="grade-praias" id="praias" aria-live="polite"></section>
+
+      <section class="avaliacao-praias" id="avaliar">
+        <div class="texto-avaliacao">
+          <p class="rotulo-destaque">Contribua</p>
+          <h2 class="titulo-avaliacao">Conte como está a praia</h2>
+    
+          <p class="paragrafo-avaliacao">
+            Sua avaliação ajuda outras pessoas a encontrarem uma praia mais limpa,
+            tranquila ou com as condições certas para o dia.
+          </p>
+
+        </div>
+
+        <form class="formulario-avaliacao" id="reviewForm">
+          <div class="linha-formulario">
+            <label>
+              Praia
+              <select id="praiaSelect" required></select>
+            </label>
+            <label>
+              Seu nome
+              <input id="usuarioInput" type="text" minlength="2" placeholder="Maria" required />
+            </label>
+          </div>
+
+          <label>
+            Nota
+            <input id="notaInput" type="range" min="1" max="5" step="1" value="5" />
+            <span class="previa-nota" id="ratingPreview">5 estrelas</span>
+          </label>
+
+          <fieldset>
+            <legend>Condições</legend>
+            <div class="lista-condicoes" id="conditionChips"></div>
+          </fieldset>
+
+          <label>
+            Comentário
+            <textarea
+              id="comentarioInput"
+              minlength="8"
+              rows="4"
+              placeholder="A praia está limpa, com pouco vento e movimento moderado."
+              required
+            ></textarea>
+          </label>
+
+          <button class="botao-enviar" type="submit">Enviar avaliação</button>
+          <p class="mensagem-formulario" id="formMessage" role="status"></p>
+        </form>
+      </section>
+
+      <section class="painel-comentarios">
+        <div>
+          <p class="rotulo-destaque">Últimos relatos</p>
+          <h2>Comentários recentes</h2>
+        </div>
+        <div class="lista-comentarios" id="comentariosList"></div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

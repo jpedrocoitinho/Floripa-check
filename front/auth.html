@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Entrar | Floripa Check</title>
+    <link rel="icon" href="img/logo-floripa-check.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://images.unsplash.com" />
+    <link rel="stylesheet" href="autch.css" />
+  </head>
+  <body class="pagina-autenticacao">
+    <main class="layout-autenticacao">
+      <section class="foto-autenticacao" aria-label="Floripa Check">
+        <nav class="navegacao-autenticacao">
+          <a class="marca" href="index.html" aria-label="Voltar para Floripa Check">
+            <span class="simbolo-marca"><img src="img/logo-floripa-check.svg" alt=""></span>
+            <span>Floripa Check</span>
+          </a>
+        </nav>
+
+        <div class="texto-autenticacao">
+          <p class="rotulo-destaque">Conta da comunidade</p>
+          <h1>Entre para avaliar as praias de Floripa.</h1>
+          <p>Salve seu nome, acompanhe sua participacao e ajude outras pessoas a escolherem o melhor destino do dia.</p>
+        </div>
+      </section>
+
+      <section class="painel-autenticacao">
+        <div class="cartao-autenticacao">
+          <div class="abas-autenticacao" role="tablist" aria-label="Entrar ou cadastrar">
+            <button class="aba-autenticacao ativo" type="button" data-target="loginForm">Entrar</button>
+            <button class="aba-autenticacao" type="button" data-target="signupForm">Criar conta</button>
+          </div>
+
+          <form class="formulario-autenticacao ativo" id="loginForm">
+            <div>
+              <p class="rotulo-destaque">Bem-vindo de volta</p>
+              <h2>Login</h2>
+            </div>
+
+            <label>
+              Email
+              <input id="loginEmail" type="email" placeholder="voce@email.com" required />
+            </label>
+
+            <label>
+              Senha
+              <input id="loginPassword" type="password" minlength="6" placeholder="Sua senha" required />
+            </label>
+
+            <button class="botao-enviar" type="submit">Entrar</button>
+          </form>
+
+          <form class="formulario-autenticacao" id="signupForm">
+            <div>
+              <p class="rotulo-destaque">Primeira vez por aqui</p>
+              <h2>Cadastro</h2>
+            </div>
+
+            <label>
+              Nome
+              <input id="signupName" type="text" minlength="2" placeholder="Seu nome" required />
+            </label>
+
+            <label>
+              Email
+              <input id="signupEmail" type="email" placeholder="voce@email.com" required />
+            </label>
+
+            <label>
+              Senha
+              <input id="signupPassword" type="password" minlength="6" placeholder="Minimo 6 caracteres" required />
+            </label>
+
+            <button class="botao-enviar" type="submit">Criar conta</button>
+          </form>
+
+          <p class="mensagem-formulario" id="authMessage" role="status"></p>
+          <a class="link-voltar" href="index.html">Voltar para as praias</a>
+        </div>
+      </section>
+    </main>
+
+    <script src="auth.js"></script>
+  </body>
+</html>

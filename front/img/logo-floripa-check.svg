@@ -1,0 +1,10 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Floripa Check</title>
+  <desc id="desc">Sol, ondas e check representando praias avaliadas.</desc>
+  <rect x="2" y="2" width="60" height="60" rx="18" fill="#FFFFFF"/>
+  <rect x="2" y="2" width="60" height="60" rx="18" stroke="#DCE8E7" stroke-width="2"/>
+  <path d="M46 23C46 30.732 39.732 37 32 37C24.268 37 18 30.732 18 23C18 15.268 24.268 9 32 9C39.732 9 46 15.268 46 23Z" fill="#F2B84B"/>
+  <path d="M12 42C17.6 35.6 25.08 35.6 30.68 42C35.76 47.8 42.8 48.36 52 43.68" stroke="#0C8FA4" stroke-width="5" stroke-linecap="round"/>
+  <path d="M18 49C23.64 44.52 29.4 44.64 35.28 49.36C39.92 53.08 45.48 53.12 52 49.48" stroke="#3A9B77" stroke-width="4" stroke-linecap="round"/>
+  <path d="M25 28.5L30.2 33.8L41 21.8" stroke="#17343A" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
