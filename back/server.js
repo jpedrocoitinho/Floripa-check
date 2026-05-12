@@ -11,7 +11,11 @@ const SUPABASE_KEY =
   process.env.SUPABASE_SERVICE_ROLE_KEY ||
   process.env.SUPABASE_SERVICE_ROLE ||
   process.env.SUPABASE_ANON_KEY;
-const DB_PROVIDER = (process.env.DB_PROVIDER || (SUPABASE_URL && SUPABASE_KEY ? 'supabase' : 'mysql')).toLowerCase();
+const DB_PROVIDER = (
+  process.env.DB_PROVIDER ||
+  (process.env.VERCEL ? 'supabase' : undefined) ||
+  (SUPABASE_URL && SUPABASE_KEY ? 'supabase' : 'mysql')
+).toLowerCase();
 
 const mysqlConfig = {
   host: process.env.DB_HOST || 'localhost',
@@ -314,6 +318,7 @@ async function ensureDatabase(req, res, next) {
     await initPromise;
     next();
   } catch (error) {
+    console.error('Banco de dados indisponivel', error);
     res.status(500).json({ error: `Banco de dados indisponivel: ${error.message}` });
   }
 }
@@ -354,6 +359,22 @@ app.get('/api/health', ensureDatabase, async (req, res) => {
     database: DB_PROVIDER === 'supabase' ? 'supabase' : mysqlConfig.database,
     supabaseUrlConfigured: Boolean(supabaseConfig.url),
     supabaseKeyConfigured: Boolean(supabaseConfig.key),
+  });
+});
+
+app.get('/api/debug-env', (req, res) => {
+  res.json({
+    provider: DB_PROVIDER,
+    vercel: Boolean(process.env.VERCEL),
+    nodeEnv: process.env.NODE_ENV || null,
+    supabaseUrlConfigured: Boolean(supabaseConfig.url),
+    supabaseKeyConfigured: Boolean(supabaseConfig.key),
+    dbProviderRaw: process.env.DB_PROVIDER || null,
+    hasSupabaseUrl: Boolean(process.env.SUPABASE_URL),
+    hasUrlSupabase: Boolean(process.env.URL_SUPABASE),
+    hasServiceRoleKey: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
+    hasServiceRole: Boolean(process.env.SUPABASE_SERVICE_ROLE),
+    hasAnonKey: Boolean(process.env.SUPABASE_ANON_KEY),
   });
 });
 
