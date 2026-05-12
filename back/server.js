@@ -6,7 +6,12 @@ const mysql = require('mysql2/promise');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const DB_PROVIDER = process.env.DB_PROVIDER || 'mysql';
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.URL_SUPABASE;
+const SUPABASE_KEY =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.SUPABASE_SERVICE_ROLE ||
+  process.env.SUPABASE_ANON_KEY;
+const DB_PROVIDER = (process.env.DB_PROVIDER || (SUPABASE_URL && SUPABASE_KEY ? 'supabase' : 'mysql')).toLowerCase();
 
 const mysqlConfig = {
   host: process.env.DB_HOST || 'localhost',
@@ -21,8 +26,8 @@ const mysqlConfig = {
 };
 
 const supabaseConfig = {
-  url: process.env.SUPABASE_URL,
-  key: process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY,
+  url: SUPABASE_URL,
+  key: SUPABASE_KEY,
 };
 
 let pool;
@@ -347,6 +352,8 @@ app.get('/api/health', ensureDatabase, async (req, res) => {
     status: 'ok',
     provider: DB_PROVIDER,
     database: DB_PROVIDER === 'supabase' ? 'supabase' : mysqlConfig.database,
+    supabaseUrlConfigured: Boolean(supabaseConfig.url),
+    supabaseKeyConfigured: Boolean(supabaseConfig.key),
   });
 });
 
