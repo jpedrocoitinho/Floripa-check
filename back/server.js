@@ -1,21 +1,18 @@
-// Bibliotecas usadas pelo servidor.
 const path = require('path');
 const crypto = require('crypto');
 const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql2/promise');
 
-// Cria o app Express e define a porta do servidor.
 const app = express();
 const PORT = process.env.PORT || 3000;
+const DB_PROVIDER = process.env.DB_PROVIDER || 'mysql';
 
-// Configuracao da conexao com o MySQL.
-// Se existir variavel de ambiente, usa ela; se nao existir, usa o valor depois do ||.
-const dbConfig = {
+const mysqlConfig = {
   host: process.env.DB_HOST || 'localhost',
   port: Number(process.env.DB_PORT) || 3306,
   user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
+  password: process.env.DB_PASSWORD || 'senai',
   database: process.env.DB_NAME || 'floripa_check',
   ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined,
   waitForConnections: true,
@@ -23,11 +20,15 @@ const dbConfig = {
   queueLimit: 0,
 };
 
-// Pool e a conexao reutilizavel com o banco.
-let pool;
+const supabaseConfig = {
+  url: process.env.SUPABASE_URL,
+  key: process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY,
+};
 
-// Praias iniciais do sistema.
-// Quando o servidor inicia, ele cadastra essas praias se elas ainda nao existirem no MySQL.
+let pool;
+let initPromise;
+let databaseReady = false;
+
 const seedPraias = [
   {
     nome: 'Praia Mole',
@@ -39,7 +40,7 @@ const seedPraias = [
   {
     nome: 'Joaquina',
     bairro: 'Leste da Ilha',
-    descricao: 'Ondas fortes, dunas por perto e um dos cartões-postais mais classicos de Floripa.',
+    descricao: 'Ondas fortes, dunas por perto e um dos cartoes-postais mais classicos de Floripa.',
     imagem_url:
       'https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=1200&q=80',
   },
@@ -51,37 +52,32 @@ const seedPraias = [
       'https://images.unsplash.com/photo-1473116763249-2faaef81ccda?auto=format&fit=crop&w=1200&q=80',
   },
   {
-    nome: 'Jurerê Internacional',
+    nome: 'Jurere Internacional',
     bairro: 'Norte da Ilha',
     descricao: 'Agua mais calma, boa estrutura e movimento elegante durante a temporada.',
     imagem_url:
       'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
   },
-
   {
-    nome: 'Barra da lagoa',
+    nome: 'Barra da Lagoa',
     bairro: 'Norte da Ilha',
-    descricao: 'Agua cristalina, pscinas naturais, bastanta comércio',
-    imagem_url:'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
-},
-
+    descricao: 'Agua cristalina, piscinas naturais e bastante comercio.',
+    imagem_url:
+      'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
+  },
   {
-    nome: 'Armação',
-    bairro: 'Sul da ilha',
-    descricao: 'Agua cristalina, pscinas naturais, bastanta comércio, trapiche',
-    imagem_url:'https://media.istockphoto.com/id/1891909146/pt/foto/rocky-ocean-coastline-beach-and-ocean-with-waves-in-brazil-aerial-view-of-ponta-das-campanhas.jpg?s=2048x2048&w=is&k=20&c=tlCDLocj_IaviNxeo3w5HPYRcYuXeyAwwY2uM1aCEj0=',
-},
- 
+    nome: 'Armacao',
+    bairro: 'Sul da Ilha',
+    descricao: 'Praia tradicional, com trapiche, barcos e acesso ao Matadeiro.',
+    imagem_url:
+      'https://media.istockphoto.com/id/1891909146/pt/foto/rocky-ocean-coastline-beach-and-ocean-with-waves-in-brazil-aerial-view-of-ponta-das-campanhas.jpg?s=2048x2048&w=is&k=20&c=tlCDLocj_IaviNxeo3w5HPYRcYuXeyAwwY2uM1aCEj0=',
+  },
 ];
 
-// Middlewares do Express.
-// cors permite requisicoes da interface; json permite receber dados em JSON;
-// static faz o backend servir os arquivos da pasta front.
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '..', 'front')));
 
-// Converte as condicoes salvas no banco de texto JSON para array JavaScript.
 function parseCondicoes(value) {
   if (!value) return [];
   if (Array.isArray(value)) return value;
@@ -94,7 +90,6 @@ function parseCondicoes(value) {
   }
 }
 
-// Ajusta os dados de uma avaliacao antes de enviar para o frontend.
 function normalizeAvaliacao(row) {
   return {
     ...row,
@@ -103,15 +98,12 @@ function normalizeAvaliacao(row) {
   };
 }
 
-// Cria um hash seguro para senha usando salt.
-// Assim a senha real nao fica salva no banco.
 function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString('hex');
   const hash = crypto.scryptSync(password, salt, 64).toString('hex');
   return `${salt}:${hash}`;
 }
 
-// Compara a senha digitada no login com o hash salvo no banco.
 function verifyPassword(password, storedHash) {
   const [salt, originalHash] = String(storedHash || '').split(':');
 
@@ -125,8 +117,6 @@ function verifyPassword(password, storedHash) {
   return original.length === hash.length && crypto.timingSafeEqual(original, hash);
 }
 
-// Valida os dados enviados pelo formulario de avaliacao.
-// Se algo estiver errado, retorna uma mensagem de erro.
 function validateAvaliacao(body) {
   const usuario = String(body.usuario || '').trim();
   const comentario = String(body.comentario || '').trim();
@@ -154,26 +144,71 @@ function validateAvaliacao(body) {
   return { usuario, comentario, nota, condicoes };
 }
 
-// Inicializa o banco:
-// 1. cria o database se nao existir;
-// 2. cria as tabelas;
-// 3. cadastra as praias iniciais.
-async function initDatabase() {
+function calculatePraiaStats(praias, avaliacoes) {
+  return praias
+    .map((praia) => {
+      const reviews = avaliacoes.filter((avaliacao) => Number(avaliacao.praia_id) === Number(praia.id));
+      const total = reviews.length;
+      const media = total
+        ? Math.round((reviews.reduce((sum, item) => sum + Number(item.nota), 0) / total) * 10) / 10
+        : 0;
+
+      return {
+        ...praia,
+        media,
+        total_avaliacoes: total,
+      };
+    })
+    .sort((a, b) => a.nome.localeCompare(b.nome));
+}
+
+function supabaseHeaders(extra = {}) {
+  return {
+    apikey: supabaseConfig.key,
+    Authorization: `Bearer ${supabaseConfig.key}`,
+    'Content-Type': 'application/json',
+    ...extra,
+  };
+}
+
+async function supabaseRequest(pathname, options = {}) {
+  if (!supabaseConfig.url || !supabaseConfig.key) {
+    throw new Error('Configure SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY.');
+  }
+
+  const response = await fetch(`${supabaseConfig.url}/rest/v1/${pathname}`, {
+    ...options,
+    headers: supabaseHeaders(options.headers),
+  });
+
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : null;
+
+  if (!response.ok) {
+    const message = data && (data.message || data.details || data.hint);
+    const error = new Error(message || 'Erro ao acessar o Supabase.');
+    error.status = response.status;
+    throw error;
+  }
+
+  return data;
+}
+
+async function initMysqlDatabase() {
   const bootstrap = await mysql.createConnection({
-    host: dbConfig.host,
-    port: dbConfig.port,
-    user: dbConfig.user,
-    password: dbConfig.password,
-    ssl: dbConfig.ssl,
+    host: mysqlConfig.host,
+    port: mysqlConfig.port,
+    user: mysqlConfig.user,
+    password: mysqlConfig.password,
+    ssl: mysqlConfig.ssl,
     multipleStatements: true,
   });
 
-  await bootstrap.query(`CREATE DATABASE IF NOT EXISTS \`${dbConfig.database}\``);
+  await bootstrap.query(`CREATE DATABASE IF NOT EXISTS \`${mysqlConfig.database}\``);
   await bootstrap.end();
 
-  pool = mysql.createPool(dbConfig);
+  pool = mysql.createPool(mysqlConfig);
 
-  // Tabela de praias, de avaliações/comentarios e cadastro e login
   await pool.query(`
     CREATE TABLE IF NOT EXISTS praias (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -185,7 +220,6 @@ async function initDatabase() {
     )
   `);
 
-  // Tabela das avaliacoes/comentarios de cada praia.
   await pool.query(`
     CREATE TABLE IF NOT EXISTS avaliacoes (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -199,7 +233,6 @@ async function initDatabase() {
     )
   `);
 
-  // Tabela de usuarios cadastrados.
   await pool.query(`
     CREATE TABLE IF NOT EXISTS cadastros (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -211,7 +244,6 @@ async function initDatabase() {
     )
   `);
 
-  // Tabela que registra tentativas de login.
   await pool.query(`
     CREATE TABLE IF NOT EXISTS logins (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -225,7 +257,6 @@ async function initDatabase() {
     )
   `);
 
-  // Insere as praias do seedPraias apenas se elas ainda nao existirem.
   for (const praia of seedPraias) {
     await pool.query(
       `
@@ -238,68 +269,172 @@ async function initDatabase() {
   }
 }
 
-// Rota para testar se API e banco estao funcionando.
-app.get('/api/health', async (req, res) => {
-  try {
-    await pool.query('SELECT 1');
-    res.json({ status: 'ok', database: dbConfig.database });
-  } catch (error) {
-    res.status(500).json({ error: 'Banco de dados indisponivel.' });
+async function initSupabaseDatabase() {
+  for (const praia of seedPraias) {
+    const found = await supabaseRequest(`praias?select=id&nome=eq.${encodeURIComponent(praia.nome)}`);
+
+    if (!found.length) {
+      await supabaseRequest('praias', {
+        method: 'POST',
+        headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify(praia),
+      });
+    }
   }
+}
+
+async function initDatabase() {
+  if (databaseReady) return;
+
+  if (DB_PROVIDER === 'supabase') {
+    await initSupabaseDatabase();
+  } else {
+    await initMysqlDatabase();
+  }
+
+  databaseReady = true;
+}
+
+async function ensureDatabase(req, res, next) {
+  try {
+    if (!initPromise) {
+      initPromise = initDatabase();
+    }
+
+    await initPromise;
+    next();
+  } catch (error) {
+    res.status(500).json({ error: `Banco de dados indisponivel: ${error.message}` });
+  }
+}
+
+async function getPraiasWithStats() {
+  if (DB_PROVIDER === 'supabase') {
+    const praias = await supabaseRequest('praias?select=*&order=nome.asc');
+    const avaliacoes = await supabaseRequest('avaliacoes?select=*');
+    return calculatePraiaStats(praias, avaliacoes.map(normalizeAvaliacao));
+  }
+
+  const [rows] = await pool.query(`
+    SELECT
+      p.id,
+      p.nome,
+      p.bairro,
+      p.descricao,
+      p.imagem_url,
+      COALESCE(ROUND(AVG(a.nota), 1), 0) AS media,
+      COUNT(a.id) AS total_avaliacoes
+    FROM praias p
+    LEFT JOIN avaliacoes a ON a.praia_id = p.id
+    GROUP BY p.id
+    ORDER BY p.nome ASC
+  `);
+
+  return rows.map((row) => ({
+    ...row,
+    media: Number(row.media),
+    total_avaliacoes: Number(row.total_avaliacoes),
+  }));
+}
+
+app.get('/api/health', ensureDatabase, async (req, res) => {
+  res.json({
+    status: 'ok',
+    provider: DB_PROVIDER,
+    database: DB_PROVIDER === 'supabase' ? 'supabase' : mysqlConfig.database,
+  });
 });
 
-// rota pro cadastro
-
-app.post('/api/cadastros', async (req, res) => {
+app.post('/api/cadastros', ensureDatabase, async (req, res) => {
   const nome = String(req.body.nome || '').trim();
   const email = String(req.body.email || '').trim().toLowerCase();
   const senha = String(req.body.senha || '');
 
-  if (!nome || !email || !senha){
-    return res.status(400).json({ error: 'Preencha nome, email, e senha seu cagalha'});
+  if (!nome || !email || !senha) {
+    return res.status(400).json({ error: 'Preencha nome, email e senha.' });
   }
 
   try {
+    const cadastro = { nome, email, senha_hash: hashPassword(senha) };
+
+    if (DB_PROVIDER === 'supabase') {
+      const [created] = await supabaseRequest('cadastros', {
+        method: 'POST',
+        headers: { Prefer: 'return=representation' },
+        body: JSON.stringify(cadastro),
+      });
+
+      return res.status(201).json({
+        id: created.id,
+        nome: created.nome,
+        email: created.email,
+        message: 'Cadastro realizado com sucesso.',
+      });
+    }
+
     const [result] = await pool.query(
       'INSERT INTO cadastros (nome, email, senha_hash) VALUES (?, ?, ?)',
-      [nome, email, hashPassword(senha)]
+      [cadastro.nome, cadastro.email, cadastro.senha_hash]
     );
-  
+
     res.status(201).json({
       id: result.insertId,
       nome,
       email,
-      message: 'Cadastro realizado com sucess'
-    
+      message: 'Cadastro realizado com sucesso.',
     });
-  
   } catch (error) {
-    res.status(500).json({ error : 'Não foi possivel fazer seu cadastro.'});
+    if (error.status === 409 || error.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ error: 'Esse email ja esta cadastrado.' });
+    }
+
+    res.status(500).json({ error: 'Nao foi possivel fazer seu cadastro.' });
   }
+});
 
-
-  });
-
-  //rota pro login
-app.post('/api/login', async (req, res) => {
+app.post('/api/login', ensureDatabase, async (req, res) => {
   const email = String(req.body.email || '').trim().toLowerCase();
   const senha = String(req.body.senha || '');
   const ip = req.ip;
   const userAgent = String(req.get('user-agent') || '').slice(0, 255);
 
   try {
-    const [rows] = await pool.query(
-      'SELECT id, nome, email, senha_hash FROM cadastros WHERE email = ?',
-      [email]
-    );
+    let usuario;
 
-    const usuario = rows[0];
+    if (DB_PROVIDER === 'supabase') {
+      const rows = await supabaseRequest(
+        `cadastros?select=id,nome,email,senha_hash&email=eq.${encodeURIComponent(email)}&limit=1`
+      );
+      usuario = rows[0];
+    } else {
+      const [rows] = await pool.query(
+        'SELECT id, nome, email, senha_hash FROM cadastros WHERE email = ?',
+        [email]
+      );
+      usuario = rows[0];
+    }
+
     const sucesso = Boolean(usuario && verifyPassword(senha, usuario.senha_hash));
+    const login = {
+      cadastro_id: usuario ? usuario.id : null,
+      email,
+      sucesso,
+      ip,
+      user_agent: userAgent,
+    };
 
-    await pool.query(
-      'INSERT INTO logins (cadastro_id, email, sucesso, ip, user_agent) VALUES (?, ?, ?, ?, ?)',
-      [usuario ? usuario.id : null, email, sucesso, ip, userAgent]
-    );
+    if (DB_PROVIDER === 'supabase') {
+      await supabaseRequest('logins', {
+        method: 'POST',
+        headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify(login),
+      });
+    } else {
+      await pool.query(
+        'INSERT INTO logins (cadastro_id, email, sucesso, ip, user_agent) VALUES (?, ?, ?, ?, ?)',
+        [login.cadastro_id, login.email, login.sucesso, login.ip, login.user_agent]
+      );
+    }
 
     if (!sucesso) {
       return res.status(401).json({ error: 'Email ou senha invalidos.' });
@@ -316,73 +451,30 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-
-// Lista todas as praias com media de nota e total de avaliacoes.
-app.get('/api/praias', async (req, res) => {
+app.get('/api/praias', ensureDatabase, async (req, res) => {
   try {
-    const [rows] = await pool.query(`
-      SELECT
-        p.id,
-        p.nome,
-        p.bairro,
-        p.descricao,
-        p.imagem_url,
-        COALESCE(ROUND(AVG(a.nota), 1), 0) AS media,
-        COUNT(a.id) AS total_avaliacoes
-      FROM praias p
-      LEFT JOIN avaliacoes a ON a.praia_id = p.id
-      GROUP BY p.id
-      ORDER BY p.nome ASC
-    `);
-
-    res.json(rows.map((row) => ({
-      ...row,
-      media: Number(row.media),
-      total_avaliacoes: Number(row.total_avaliacoes),
-    })));
+    res.json(await getPraiasWithStats());
   } catch (error) {
     res.status(500).json({ error: 'Nao foi possivel listar as praias.' });
   }
 });
 
-// Busca uma praia especifica pelo id.
-app.get('/api/praias/:id', async (req, res) => {
+app.get('/api/praias/:id', ensureDatabase, async (req, res) => {
   try {
-    const [rows] = await pool.query(
-      `
-        SELECT
-          p.id,
-          p.nome,
-          p.bairro,
-          p.descricao,
-          p.imagem_url,
-          COALESCE(ROUND(AVG(a.nota), 1), 0) AS media,
-          COUNT(a.id) AS total_avaliacoes
-        FROM praias p
-        LEFT JOIN avaliacoes a ON a.praia_id = p.id
-        WHERE p.id = ?
-        GROUP BY p.id
-      `,
-      [req.params.id]
-    );
+    const praias = await getPraiasWithStats();
+    const praia = praias.find((item) => Number(item.id) === Number(req.params.id));
 
-    if (rows.length === 0) {
+    if (!praia) {
       return res.status(404).json({ error: 'Praia nao encontrada.' });
     }
 
-    const praia = rows[0];
-    res.json({
-      ...praia,
-      media: Number(praia.media),
-      total_avaliacoes: Number(praia.total_avaliacoes),
-    });
+    res.json(praia);
   } catch (error) {
     res.status(500).json({ error: 'Nao foi possivel buscar a praia.' });
   }
 });
 
-// cadastrar praia nova 
-app.post('/api/praias', async (req, res) => {
+app.post('/api/praias', ensureDatabase, async (req, res) => {
   const nome = String(req.body.nome || '').trim();
   const bairro = String(req.body.bairro || '').trim();
   const descricao = String(req.body.descricao || '').trim();
@@ -393,6 +485,16 @@ app.post('/api/praias', async (req, res) => {
   }
 
   try {
+    if (DB_PROVIDER === 'supabase') {
+      const [created] = await supabaseRequest('praias', {
+        method: 'POST',
+        headers: { Prefer: 'return=representation' },
+        body: JSON.stringify({ nome, bairro, descricao, imagem_url: imagemUrl }),
+      });
+
+      return res.status(201).json(created);
+    }
+
     const [result] = await pool.query(
       'INSERT INTO praias (nome, bairro, descricao, imagem_url) VALUES (?, ?, ?, ?)',
       [nome, bairro, descricao, imagemUrl]
@@ -404,9 +506,15 @@ app.post('/api/praias', async (req, res) => {
   }
 });
 
-// Lista as avaliacoes de uma praia.
-app.get('/api/praias/:id/avaliacoes', async (req, res) => {
+app.get('/api/praias/:id/avaliacoes', ensureDatabase, async (req, res) => {
   try {
+    if (DB_PROVIDER === 'supabase') {
+      const rows = await supabaseRequest(
+        `avaliacoes?select=*&praia_id=eq.${encodeURIComponent(req.params.id)}&order=criado_em.desc`
+      );
+      return res.json(rows.map(normalizeAvaliacao));
+    }
+
     const [rows] = await pool.query(
       `
         SELECT id, praia_id, usuario, nota, comentario, condicoes, criado_em
@@ -423,8 +531,7 @@ app.get('/api/praias/:id/avaliacoes', async (req, res) => {
   }
 });
 
-// Salva uma nova avaliacao para uma praia.
-app.post('/api/praias/:id/avaliacoes', async (req, res) => {
+app.post('/api/praias/:id/avaliacoes', ensureDatabase, async (req, res) => {
   const valid = validateAvaliacao(req.body);
 
   if (valid.error) {
@@ -432,9 +539,33 @@ app.post('/api/praias/:id/avaliacoes', async (req, res) => {
   }
 
   try {
+    const avaliacao = {
+      praia_id: Number(req.params.id),
+      usuario: valid.usuario,
+      nota: valid.nota,
+      comentario: valid.comentario,
+      condicoes: DB_PROVIDER === 'supabase' ? valid.condicoes : JSON.stringify(valid.condicoes),
+    };
+
+    if (DB_PROVIDER === 'supabase') {
+      const praias = await supabaseRequest(`praias?select=id&id=eq.${encodeURIComponent(req.params.id)}&limit=1`);
+
+      if (!praias.length) {
+        return res.status(404).json({ error: 'Praia nao encontrada.' });
+      }
+
+      const [created] = await supabaseRequest('avaliacoes', {
+        method: 'POST',
+        headers: { Prefer: 'return=representation' },
+        body: JSON.stringify(avaliacao),
+      });
+
+      return res.status(201).json(normalizeAvaliacao(created));
+    }
+
     const [praias] = await pool.query('SELECT id FROM praias WHERE id = ?', [req.params.id]);
 
-    if (praias.length === 0) {
+    if (!praias.length) {
       return res.status(404).json({ error: 'Praia nao encontrada.' });
     }
 
@@ -443,18 +574,12 @@ app.post('/api/praias/:id/avaliacoes', async (req, res) => {
         INSERT INTO avaliacoes (praia_id, usuario, nota, comentario, condicoes)
         VALUES (?, ?, ?, ?, ?)
       `,
-      [
-        req.params.id,
-        valid.usuario,
-        valid.nota,
-        valid.comentario,
-        JSON.stringify(valid.condicoes),
-      ]
+      [avaliacao.praia_id, avaliacao.usuario, avaliacao.nota, avaliacao.comentario, avaliacao.condicoes]
     );
 
     res.status(201).json({
       id: result.insertId,
-      praia_id: Number(req.params.id),
+      praia_id: avaliacao.praia_id,
       usuario: valid.usuario,
       nota: valid.nota,
       comentario: valid.comentario,
@@ -465,19 +590,21 @@ app.post('/api/praias/:id/avaliacoes', async (req, res) => {
   }
 });
 
-// Se a rota nao for da API, envia o index.html do frontend.
 app.use((req, res) => {
   res.sendFile(path.join(__dirname, '..', 'front', 'index.html'));
 });
 
-// Inicia o servidor se der errado quebra
-initDatabase()
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(`Floripa Check rodando em http://localhost:${PORT}`);
+if (require.main === module) {
+  initDatabase()
+    .then(() => {
+      app.listen(PORT, () => {
+        console.log(`Floripa Check rodando em http://localhost:${PORT}`);
+      });
+    })
+    .catch((error) => {
+      console.error('Erro ao iniciar o banco de dados:', error.message);
+      process.exit(1);
     });
-  })
-  .catch((error) => {
-    console.error('Erro ao iniciar o banco de dados:', error.message);
-    process.exit(1);
-  });
+}
+
+module.exports = app;
