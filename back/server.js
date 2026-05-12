@@ -144,6 +144,11 @@ function validateAvaliacao(body) {
   return { usuario, comentario, nota, condicoes };
 }
 
+function sendServerError(res, error, fallbackMessage) {
+  console.error(fallbackMessage, error);
+  res.status(500).json({ error: `${fallbackMessage}: ${error.message}` });
+}
+
 function calculatePraiaStats(praias, avaliacoes) {
   return praias
     .map((praia) => {
@@ -388,7 +393,7 @@ app.post('/api/cadastros', ensureDatabase, async (req, res) => {
       return res.status(409).json({ error: 'Esse email ja esta cadastrado.' });
     }
 
-    res.status(500).json({ error: 'Nao foi possivel fazer seu cadastro.' });
+    sendServerError(res, error, 'Nao foi possivel fazer seu cadastro');
   }
 });
 
@@ -447,7 +452,7 @@ app.post('/api/login', ensureDatabase, async (req, res) => {
       message: 'Login realizado com sucesso.',
     });
   } catch (error) {
-    res.status(500).json({ error: 'Nao foi possivel fazer login.' });
+    sendServerError(res, error, 'Nao foi possivel fazer login');
   }
 });
 
@@ -455,7 +460,7 @@ app.get('/api/praias', ensureDatabase, async (req, res) => {
   try {
     res.json(await getPraiasWithStats());
   } catch (error) {
-    res.status(500).json({ error: 'Nao foi possivel listar as praias.' });
+    sendServerError(res, error, 'Nao foi possivel listar as praias');
   }
 });
 
@@ -470,7 +475,7 @@ app.get('/api/praias/:id', ensureDatabase, async (req, res) => {
 
     res.json(praia);
   } catch (error) {
-    res.status(500).json({ error: 'Nao foi possivel buscar a praia.' });
+    sendServerError(res, error, 'Nao foi possivel buscar a praia');
   }
 });
 
@@ -502,7 +507,7 @@ app.post('/api/praias', ensureDatabase, async (req, res) => {
 
     res.status(201).json({ id: result.insertId, nome, bairro, descricao, imagem_url: imagemUrl });
   } catch (error) {
-    res.status(500).json({ error: 'Nao foi possivel cadastrar a praia.' });
+    sendServerError(res, error, 'Nao foi possivel cadastrar a praia');
   }
 });
 
@@ -527,7 +532,7 @@ app.get('/api/praias/:id/avaliacoes', ensureDatabase, async (req, res) => {
 
     res.json(rows.map(normalizeAvaliacao));
   } catch (error) {
-    res.status(500).json({ error: 'Nao foi possivel listar as avaliacoes.' });
+    sendServerError(res, error, 'Nao foi possivel listar as avaliacoes');
   }
 });
 
@@ -586,7 +591,7 @@ app.post('/api/praias/:id/avaliacoes', ensureDatabase, async (req, res) => {
       condicoes: valid.condicoes,
     });
   } catch (error) {
-    res.status(500).json({ error: 'Nao foi possivel salvar a avaliacao.' });
+    sendServerError(res, error, 'Nao foi possivel salvar a avaliacao');
   }
 });
 
